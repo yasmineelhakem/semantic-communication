@@ -1,0 +1,85 @@
+
+# ==========================================
+# Semantic Communication Project - .gitignore
+# ==========================================
+
+# Datasets (keep local copies)
+data/
+datasets/
+
+# Input images and generated image results
+*.[jJ][pP][gG]
+*.[jJ][pP][eE][gG]
+*.[pP][nN][gG]
+*.[gG][iI][fF]
+*.[bB][mM][pP]
+*.[tT][iI][fF]
+*.[tT][iI][fF][fF]
+*.[wW][eE][bB][pP]
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Test and tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Python build files
+build/
+dist/
+*.egg-info/
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Trained JSCC model checkpoints
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.keras
+
+# TensorBoard logs
+runs/
+events.out.tfevents.*
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.log
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# IDE settings
+.idea/
+.vscode/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ==========================================
+# Files intentionally allowed:
+# - Python source code
+# - Classical and JSCC implementations
+# - Training and evaluation scripts
+# - Tests and configuration files
+# - README and documentation
+# - CSV experiment metrics
+# - JSON experiment results
+# ==========================================
