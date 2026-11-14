@@ -20,7 +20,7 @@ def train():
     epochs = 3
     learning_rate = 0.001
     batch_size = 32
-    lambda_perceptual = 0.1
+    lambda_perceptual = 0.01
 
     train_loader, test_loader = get_image_dataloaders(
         batch_size=batch_size
@@ -91,7 +91,7 @@ def train():
 
     torch.save(
         model.state_dict(),
-        "checkpoints/semantic_model_perceptual.pth"
+        "checkpoints/semantic_model_perceptual_001.pth"
     )
 
     print("\nPerceptual model saved successfully!")

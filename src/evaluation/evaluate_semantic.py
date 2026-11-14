@@ -115,7 +115,7 @@ def main():
 
     # Load perceptual model (MSE + Perceptual Loss)
     perceptual_model = load_model(
-        "checkpoints/semantic_model_perceptual.pth",
+        "checkpoints/semantic_model_perceptual_001.pth",
         device
     )
 
