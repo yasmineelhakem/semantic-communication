@@ -1,0 +1,15 @@
+{
+  "demo_awgn": "src.channels.demo_awgn",
+  "demo_ber": "src.classical.ber",
+  "demo_image": "src.classical.image_transmission",
+  "demo_fec": "src.classical.fec_experiment",
+  "demo_metrics": "src.classical.pipeline",
+  "train_jscc": "src.jscc.training",
+  "evaluate_jscc": "src.jscc.inference",
+  "evaluate_jscc_multi": "src.jscc.evaluation",
+  "plot_jscc": "src.jscc.plotting",
+  "test_encoder": "scripts.jscc.test_encoder",
+  "test_norm": "scripts.jscc.test_norm",
+  "test_decoder": "scripts.jscc.test_decoder",
+  "test_awgn_jscc": "scripts.jscc.test_awgn_jscc"
+}
