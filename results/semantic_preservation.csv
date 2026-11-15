@@ -1,0 +1,13 @@
+model,snr_db,original_accuracy,reconstructed_accuracy,semantic_preservation_accuracy
+MSE,-5,48.9,26.6,31.4
+MSE,0,48.9,40.0,51.9
+MSE,5,48.9,44.9,71.0
+MSE,10,48.9,45.0,76.0
+MSE,15,48.9,45.2,77.1
+MSE,20,48.9,45.2,75.9
+MSE + Perceptual 0.01,-5,48.9,24.7,29.9
+MSE + Perceptual 0.01,0,48.9,33.1,46.5
+MSE + Perceptual 0.01,5,48.9,41.9,66.0
+MSE + Perceptual 0.01,10,48.9,45.6,74.5
+MSE + Perceptual 0.01,15,48.9,44.3,75.7
+MSE + Perceptual 0.01,20,48.9,43.7,75.9
