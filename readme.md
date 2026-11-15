@@ -29,6 +29,7 @@ Il est constitué de trois couches convolutives :
 L'image d'entrée possède trois canaux de couleur RGB et une résolution de 128 × 128 pixels. Après encodage, elle est représentée par un tenseur de dimension 2 × 32 × 32.
 
 Cette transformation réduit considérablement la dimension de la représentation transmise.
+L'encodeur est implémenté dans `src/models/semantic/encoder.py`.
 
 ### 3.2.2. Canal de communication AWGN
 
@@ -69,6 +70,7 @@ $$
 $$
 
 Cette approche permet de contrôler précisément les conditions de transmission et de tester la robustesse du système face à différents niveaux de bruit.
+La simulation du canal est réalisée dans `src/channels/awgn.py` et testée dans `tests/test_awgn.py`.
 
 ### 3.2.3. Décodeur neuronal
 
@@ -84,6 +86,7 @@ Son architecture comprend :
 - Une fonction d'activation Sigmoid garantissant des valeurs de pixels comprises entre 0 et 1.
 
 Le résultat final est une image reconstruite de dimension 3 × 128 × 128.
+Le décodeur est défini dans `src/models/semantic/decoder.py` ; le modèle complet qui relie l'encodeur, le canal et le décodeur se trouve dans `src/models/semantic/semantic_model.py` et est testé dans `tests/test_semantic_model.py`.
 
 ## 3.3. Fonctions de perte utilisées
 
@@ -108,6 +111,7 @@ où :
 - N représente le nombre total de valeurs de pixels.
 
 Cette fonction de perte constitue une première référence pour entraîner le système de communication.
+La perte perceptuelle décrite ci-dessous est implémentée dans `src/models/semantic/losses.py`.
 
 ### 3.3.2. Fonction de perte perceptuelle
 
@@ -148,6 +152,7 @@ Ce jeu de données contient des images appartenant à dix classes différentes. 
 Pour les besoins de notre architecture, les images ont été redimensionnées à 128 × 128 pixels et converties en tenseurs.
 
 Un sous-ensemble de 5 000 images a été utilisé pour l'entraînement et 1 000 images pour l'évaluation.
+Le chargement, le redimensionnement et la préparation des jeux de données sont effectués dans `src/datasets/image_dataset.py`.
 
 ### 3.4.2. Paramètres d'entraînement
 
@@ -168,6 +173,7 @@ Les paramètres utilisés sont les suivants :
 | SNR pendant l'entraînement | Tiré aléatoirement entre 0 et 20 dB |
 
 Le SNR est choisi aléatoirement pendant l'entraînement afin d'exposer le modèle à différentes conditions de transmission.
+Le script d'entraînement est `src/training/train_semantic.py`.
 
 ### 3.4.3. Conditions d'évaluation
 
@@ -183,6 +189,7 @@ Les valeurs de SNR considérées sont :
 - 20 dB
 
 Cette évaluation permet d'observer le comportement du système lorsque le niveau de bruit varie.
+L'évaluation des modèles pour ces valeurs de SNR et l'enregistrement des résultats sont effectués par `src/evaluation/evaluate_semantic.py`.
 
 ## 3.5. Métriques d'évaluation
 
@@ -193,24 +200,28 @@ Trois métriques ont été utilisées pour comparer les performances des deux mo
 Le PSNR mesure la qualité de reconstruction en se basant sur l'erreur quadratique moyenne entre l'image originale et l'image reconstruite.
 
 Une valeur élevée indique une meilleure qualité de reconstruction.
+Le calcul du PSNR est défini dans `src/evaluation/metrics.py`.
 
 ### 3.5.2. Structural Similarity Index (SSIM)
 
 Le SSIM mesure la similarité structurelle entre deux images en tenant compte de leur luminance, de leur contraste et de leur structure.
 
 Sa valeur est généralement comprise entre 0 et 1. Une valeur proche de 1 indique une forte similarité.
+Le calcul du SSIM est également défini dans `src/evaluation/metrics.py`.
 
 ### 3.5.3. Perceptual Loss
 
 La Perceptual Loss mesure la différence entre les caractéristiques extraites des images originales et reconstruites à l'aide de VGG16.
 
 Une valeur faible indique une meilleure similarité dans l'espace des caractéristiques utilisé.
+Cette métrique est calculée lors de l'évaluation par `src/evaluation/evaluate_semantic.py`.
 
 ## 3.6. Résultats expérimentaux et discussion
 
 Les résultats obtenus montrent que les performances des deux modèles s'améliorent lorsque le SNR augmente.
 
 Cette évolution est attendue, car un SNR élevé correspond à un niveau de bruit plus faible dans le canal de communication.
+Les mesures sont enregistrées dans `results/semantic_evaluation.csv`. Les graphiques présentés dans cette section sont générés à partir de ce fichier par `src/evaluation/plot_semantic_results.py`.
 
 ### 3.6.1. Analyse du PSNR
 
@@ -220,6 +231,8 @@ Le modèle entraîné avec MSE + Perceptual Loss présente un PSNR supérieur à
 
 Ces résultats indiquent une amélioration de la qualité de reconstruction mesurée par le PSNR.
 
+![PSNR en fonction du SNR pour les deux modèles](results/psnr_comparison.png)
+
 ### 3.6.2. Analyse du SSIM
 
 Les résultats du SSIM montrent également une amélioration en faveur du modèle intégrant la perte perceptuelle.
@@ -227,6 +240,8 @@ Les résultats du SSIM montrent également une amélioration en faveur du modèl
 À 20 dB, le SSIM atteint environ 0,909 pour le modèle perceptuel, contre 0,870 pour le modèle MSE.
 
 Cela suggère une meilleure préservation des structures visuelles des images reconstruites.
+
+![SSIM en fonction du SNR pour les deux modèles](results/ssim_comparison.png)
 
 ### 3.6.3. Analyse de la Perceptual Loss
 
@@ -238,6 +253,8 @@ Le modèle entraîné avec la combinaison MSE + Perceptual Loss obtient des vale
 
 Cette observation confirme que l'ajout de la perte perceptuelle pendant l'entraînement améliore la similarité des caractéristiques extraites par VGG16.
 
+![Perte perceptuelle en fonction du SNR pour les deux modèles](results/perceptual_loss_comparison.png)
+
 ### 3.6.4. Comparaison globale
 
 Les résultats expérimentaux montrent que l'intégration d'une perte perceptuelle améliore les trois métriques considérées dans cette expérience.
@@ -245,6 +262,9 @@ Les résultats expérimentaux montrent que l'intégration d'une perte perceptuel
 L'amélioration est particulièrement visible lorsque les conditions de transmission sont moins bruitées.
 
 Ces observations mettent en évidence l'intérêt de combiner une perte pixel par pixel et une perte basée sur les caractéristiques visuelles pour entraîner un système de communication sémantique.
+Les reconstructions comparées aux images originales pour plusieurs valeurs de SNR sont générées par `src/evaluation/visualize_reconstructions.py` :
+
+![Comparaison des images originales et reconstruites selon le SNR](results/reconstruction_comparison_001.png)
 
 ## 3.7. Conclusion
 
