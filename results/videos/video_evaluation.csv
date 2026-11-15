@@ -1,0 +1,13 @@
+model,snr_db,frames,psnr,ssim,spa,video_path
+MSE,-5,40,15.145311819594534,0.18967528641223907,0.0,results/videos\MSE\video_-5dB.mp4
+MSE,0,40,18.14513349350945,0.339735746383667,0.0,results/videos\MSE\video_0dB.mp4
+MSE,5,40,20.030610718098707,0.5151451826095581,7.5,results/videos\MSE\video_5dB.mp4
+MSE,10,40,20.864560661154933,0.6476637125015259,97.5,results/videos\MSE\video_10dB.mp4
+MSE,15,40,21.166127213329464,0.7195095419883728,100.0,results/videos\MSE\video_15dB.mp4
+MSE,20,40,21.270405375753587,0.74972003698349,100.0,results/videos\MSE\video_20dB.mp4
+MSE_Perceptual,-5,40,16.124804302407018,0.23614302277565002,0.0,results/videos\MSE_Perceptual\video_-5dB.mp4
+MSE_Perceptual,0,40,18.957763636596646,0.40896978974342346,0.0,results/videos\MSE_Perceptual\video_0dB.mp4
+MSE_Perceptual,5,40,20.65026762147891,0.5904698967933655,77.5,results/videos\MSE_Perceptual\video_5dB.mp4
+MSE_Perceptual,10,40,21.331359831957098,0.710037112236023,100.0,results/videos\MSE_Perceptual\video_10dB.mp4
+MSE_Perceptual,15,40,21.554379661157277,0.7642475366592407,100.0,results/videos\MSE_Perceptual\video_15dB.mp4
+MSE_Perceptual,20,40,21.63760599846638,0.7848142385482788,100.0,results/videos\MSE_Perceptual\video_20dB.mp4
