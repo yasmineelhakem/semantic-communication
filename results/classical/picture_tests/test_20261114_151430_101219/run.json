@@ -1,0 +1,14 @@
+{
+  "input": "S:\\semantic-communication-starter\\semantic-communication-starter\\data\\test_images\\test.png",
+  "seed": 42,
+  "snr_db": [
+    5,
+    8,
+    10,
+    12
+  ],
+  "image_size": 128,
+  "jpeg_quality": 75,
+  "fec": "Hamming (7,4)",
+  "modulation": "QPSK"
+}

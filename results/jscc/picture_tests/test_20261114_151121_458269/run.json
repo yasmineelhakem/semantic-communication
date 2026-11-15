@@ -1,0 +1,13 @@
+{
+  "input": "S:\\semantic-communication-starter\\semantic-communication-starter\\data\\test_images\\test.png",
+  "checkpoint": "S:\\semantic-communication-starter\\semantic-communication-starter\\results\\jscc\\best_model.pth",
+  "seed": 42,
+  "snr_db": [
+    0,
+    5,
+    10,
+    15,
+    20
+  ],
+  "image_size": 128
+}

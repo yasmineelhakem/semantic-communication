@@ -73,6 +73,10 @@ events.out.tfevents.*
 Thumbs.db
 Desktop.ini
 
+# Track experiment results, including images and model checkpoints
+!/results/
+!/results/**
+
 # ==========================================
 # Files intentionally allowed:
 # - Python source code
