@@ -582,12 +582,33 @@ Les reconstructions comparées aux images originales pour plusieurs valeurs de S
 
 ![Comparaison des images originales et reconstruites selon le SNR](results/reconstruction_comparison_001.png)
 
+### 3.6.5. Évaluation de la préservation sémantique
+
+La qualité de reconstruction ne mesure pas directement si le contenu sémantique de l'image est préservé. Pour compléter le PSNR, le SSIM et la Perceptual Loss, la **Semantic Preservation Accuracy (SPA)** compare les classes prédites pour chaque image originale et sa reconstruction.
+
+Un classificateur CNN indépendant, entraîné sur CIFAR-10 et utilisé uniquement pour cette évaluation, prédit les classes des images originales et reconstruites. Les images sont ramenées à 32 × 32 pixels avant classification, conformément à l'entrée du classificateur. La SPA est la proportion d'images pour lesquelles les deux prédictions sont identiques. Elle mesure donc la cohérence des prédictions entre l'original et la reconstruction, et non l'exactitude de ces prédictions par rapport aux étiquettes réelles.
+
+Le classificateur est défini dans [`src/evaluation/semantic_classifier.py`](src/evaluation/semantic_classifier.py) et son entraînement dans [`src/evaluation/train_semantic_classifier.py`](src/evaluation/train_semantic_classifier.py). L'évaluation des deux modèles pour chaque SNR est effectuée par [`src/evaluation/evaluate_semantic_preservation.py`](src/evaluation/evaluate_semantic_preservation.py). Les résultats détaillés sont disponibles dans [`results/semantic_preservation.csv`](results/semantic_preservation.csv).
+
+| SNR (dB) | SPA — MSE | SPA — MSE + Perceptual Loss |
+|---:|---:|---:|
+| -5 | 31,4 % | 29,9 % |
+| 0 | 51,9 % | 46,5 % |
+| 5 | 71,0 % | 66,0 % |
+| 10 | 76,0 % | 74,5 % |
+| 15 | 77,1 % | 75,7 % |
+| 20 | 75,9 % | 75,9 % |
+
+La SPA augmente globalement avec le SNR : pour le modèle MSE, elle passe de 31,4 % à -5 dB à un maximum de 77,1 % à 15 dB, puis atteint 75,9 % à 20 dB. Le modèle MSE obtient une SPA supérieure à celui avec perte perceptuelle pour cinq des six SNR évalués ; les deux résultats sont égaux à 20 dB.
+
+Ainsi, l'amélioration de la qualité perceptuelle mesurée par le PSNR, le SSIM et la Perceptual Loss ne se traduit pas nécessairement par une meilleure cohérence des classes prédites. La SPA complète ces métriques en apportant une mesure orientée vers la préservation du contenu sémantique.
+
 ## 3.7. Conclusion
 
 Dans cette partie, nous avons conçu et évalué un système de communication sémantique d'images reposant sur une architecture CNN encodeur-décodeur et un canal AWGN.
 
 Deux stratégies d'entraînement ont été étudiées : une première basée uniquement sur la MSE et une deuxième combinant la MSE avec une perte perceptuelle extraite d'un réseau VGG16 pré-entraîné.
 
-Les résultats obtenus montrent que la deuxième stratégie fournit de meilleures performances selon les métriques PSNR, SSIM et Perceptual Loss pour les conditions de SNR étudiées.
+Les résultats obtenus montrent que la deuxième stratégie fournit de meilleures performances selon les métriques PSNR, SSIM et Perceptual Loss pour les conditions de SNR étudiées. En revanche, la SPA est légèrement supérieure pour le modèle MSE à la plupart des SNR. Cette différence souligne l'intérêt de compléter les métriques de qualité d'image par une mesure de préservation sémantique.
 
 Cette expérimentation constitue une première validation du système proposé. Des entraînements supplémentaires et des évaluations sur des jeux de données plus diversifiés permettraient de renforcer la généralisation et la robustesse des résultats.
