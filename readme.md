@@ -127,143 +127,6 @@ Le symbole « — » indique que le JPEG n'a pas pu être décodé : aucune vale
 
 Ces résultats distinguent deux critères : **pouvoir ouvrir le fichier** et **obtenir une image fidèle**. Un JPEG lisible peut encore présenter une qualité de reconstruction très faible.
 
-### 1.5.3. Extension vidéo : transmission indépendante des images
-
-Le module `src/classical/video_transmission.py` applique la chaîne classique à
-chaque image d'une courte vidéo MP4, sans dépendance entre les images. Il réutilise
-les fonctions de modulation/transmission QPSK, reconstruction JPEG, codage Hamming
-et calcul des métriques existantes. Les expériences d'images restent inchangées.
-
-Installer les dépendances, puis lancer depuis la racine du projet :
-
-```bash
-python -m pip install -r requirements.txt
-python -m scripts.classical.demo_video --input data/input.mp4
-```
-
-Les SNR par défaut sont **0, 5, 10, 15 et 20 dB**. Chaque image est convertie en
-RGB, redimensionnée à 128 × 128 comme dans l'expérience classique, puis compressée
-en JPEG de qualité 75 et protégée par Hamming (7,4). La cadence FPS annoncée par
-la source est conservée, sans arrondi à un entier et sans suppression d'images
-en cas d'échec de transmission. Une cadence absente ou invalide provoque une erreur.
-
-Si un JPEG est illisible ou possède des dimensions corrompues, sa sortie est une
-**image noire** ; aucune image précédente n'est réutilisée. PSNR et SSIM sont
-calculés pour chaque image, y compris ces sorties noires, par rapport à l'image
-extraite et redimensionnée avant compression JPEG. Les moyennes arithmétiques
-portent sur toutes les images traitées. Les indicateurs de décodage permettent de
-distinguer les pertes de transmission des images reçues avec succès.
-
-Chaque exécution crée un dossier distinct sous `results/classical/video/run_*/` :
-
-```text
-reference_frames/frame_000000.png       # Images extraites avant JPEG
-snr_0dB/frame_000000.jpg                 # Octets JPEG reçus, même illisibles
-snr_0dB/frame_000000.png                 # Image reçue ou remplacement noir
-snr_5dB/, snr_10dB/, snr_15dB/, snr_20dB/
-reconstruction_0dB.avi                  # Une vidéo reconstruite par SNR
-reconstruction_5dB.avi, ...
-frames.csv                             # SNR, indice, temps, BER, PSNR, SSIM, état
-summary.csv                            # Moyennes, succès et échecs par SNR
-run.json                               # Paramètres, FPS et nombre d'images
-```
-
-Les vidéos utilisent **Motion-JPEG dans un conteneur AVI** pour conserver des
-images codées indépendamment, sans compression temporelle, images clés ou
-estimation de mouvement. Les métriques portent sur les PNG reçus **avant** la
-compression supplémentaire du fichier vidéo de présentation. La piste audio
-n'est pas transmise. Le traitement vise les vidéos à cadence constante ; les
-horodatages individuels d'une source à cadence variable ne sont pas reproduits.
-
-Options utiles :
-
-```bash
-# Essai court sur les 30 premières images
-python -m scripts.classical.demo_video --input data/input.mp4 --max-frames 30
-
-# Transmission sans Hamming et choix des SNR
-python -m scripts.classical.demo_video --input data/input.mp4 --no-fec --snr 5 10 20
-
-# Vérifications des images indépendantes, des codecs, des métriques et des FPS
-python -m unittest discover -s tests -p test_classical_video.py -v
-```
-
-`--size`, `--jpeg-quality`, `--seed` et `--output` permettent de modifier les
-paramètres de l'expérience. L'implémentation utilise OpenCV sans interface graphique
-(`opencv-python-headless`) pour lire la vidéo et écrire les sorties.
-
-### 1.5.4. Choisir le modèle pour transmettre une vidéo
-
-La commande commune permet désormais de choisir **une méthode par exécution** :
-
-```bash
-python -m scripts.transmit_video --input data/input.mp4 --model classical
-python -m scripts.transmit_video --input data/input.mp4 --model jscc
-python -m scripts.transmit_video --input data/input.mp4 --model semantic-mse
-python -m scripts.transmit_video --input data/input.mp4 --model semantic-perceptual
-```
-
-| Valeur de `--model` | Traitement indépendant de chaque image | Poids par défaut | Dossier des résultats |
-|---|---|---|---|
-| `classical` | JPEG → Hamming → QPSK → AWGN → décodage | Aucun entraînement nécessaire | `results/classical/video/` |
-| `jscc` | Encodeur CNN → symboles complexes normalisés → AWGN → décodeur CNN | `results/jscc/best_model.pth` | `results/jscc/video/` |
-| `semantic-mse` | Architecture neuronale I/Q, entraînée avec MSE | `checkpoints/semantic_model.pth` | `results/semantic/video/mse/` |
-| `semantic-perceptual` | Même architecture I/Q, avec les poids entraînés avec MSE + perte perceptuelle | `checkpoints/semantic_model_perceptual_001.pth` | `results/semantic/video/perceptual/` |
-
-**Disponibilité des modèles :** le modèle JSCC est présent dans ce dépôt.
-Les deux fichiers attendus dans `checkpoints/` doivent être restaurés pour les
-variantes sémantiques. La commande refuse de lancer une variante neuronale si ses
-poids sont absents ou incompatibles ; elle ne remplace jamais ces poids par un
-modèle non entraîné. Un fichier situé ailleurs peut être indiqué explicitement :
-
-```bash
-python -m scripts.transmit_video --input data/input.mp4 --model semantic-perceptual --checkpoint chemin/vers/semantic_model_perceptual_001.pth
-```
-
-Les deux variantes sémantiques ont la même architecture : leur différence vient
-de l'entraînement enregistré dans les poids. Il faut donc fournir le fichier
-correspondant à la variante choisie. VGG16 intervient pendant l'entraînement
-perceptuel ; il n'est pas chargé pour transmettre une vidéo et aucun nouvel
-entraînement n'est lancé.
-
-Le traitement suit les étapes suivantes :
-
-1. Ouvrir le MP4, lire sa cadence FPS, puis extraire les images dans l'ordre.
-2. Préparer chaque image en RGB 128 × 128. Les modèles neuronaux existants
-   exigent cette taille ; `--size` reste configurable pour la méthode classique.
-3. Charger **une seule fois** les poids du modèle neuronal sélectionné, sur CPU,
-   et le placer en mode évaluation. Chaque image traverse ensuite ce modèle
-   séparément, sans mémoire ni réutilisation d'une image précédente.
-4. Pour chaque SNR demandé, ajouter le bruit AWGN dans la chaîne choisie et
-   reconstruire l'image. Par défaut, les SNR sont 0, 5, 10, 15 et 20 dB.
-5. Enregistrer les PNG reçus, leurs PSNR/SSIM, puis une vidéo Motion-JPEG par
-   SNR à la cadence d'origine. `summary.csv` contient les moyennes sur les images.
-
-Exemple d'un essai JSCC limité aux 30 premières images, à 5 et 10 dB :
-
-```bash
-python -m scripts.transmit_video --input data/input.mp4 --model jscc --snr 5 10 --max-frames 30
-```
-
-Les sorties conservent la structure `run_*/` décrite ci-dessus. `run.json` indique
-la méthode choisie et le chemin exact des poids utilisés. Les CSV contiennent
-aussi la colonne `model`. Pour les réseaux, `frame_received` décrit la production
-d'une image, tandis que BER, nombre de bits erronés et lisibilité JPEG sont
-laissés vides, car aucun fichier JPEG n'est transmis. Dans les résumés,
-`decoded_frames` désigne le nombre d'images produites avec succès. Une sortie
-neuronale invalide interrompt l'exécution avec une erreur explicite.
-
-Les options `--no-fec` et `--jpeg-quality` concernent uniquement `classical`.
-`--checkpoint` concerne uniquement les méthodes neuronales. L'ancienne commande
-`python -m scripts.classical.demo_video` reste disponible, et la méthode par
-défaut reste classique. Les scripts d'entraînement et d'inférence d'images
-existants ne sont pas modifiés.
-
-Les mêmes images peuvent ainsi être essayées avec plusieurs méthodes, mais
-leurs scores ne constituent pas automatiquement une comparaison à budget égal :
-les deux architectures neuronales transmettent respectivement 2048 et 1024
-symboles complexes par image, alors que le budget classique dépend de JPEG et du FEC.
-
 ## 1.6. Conclusion
 
 La transmission classique constitue une référence fondée sur des composants explicites : JPEG pour la compression, Hamming pour la protection et QPSK pour la modulation. Le codage correcteur améliore la récupération des bits, mais sa capacité reste limitée lorsque le bruit est élevé.
@@ -719,12 +582,33 @@ Les reconstructions comparées aux images originales pour plusieurs valeurs de S
 
 ![Comparaison des images originales et reconstruites selon le SNR](results/reconstruction_comparison_001.png)
 
+### 3.6.5. Évaluation de la préservation sémantique
+
+La qualité de reconstruction ne mesure pas directement si le contenu sémantique de l'image est préservé. Pour compléter le PSNR, le SSIM et la Perceptual Loss, la **Semantic Preservation Accuracy (SPA)** compare les classes prédites pour chaque image originale et sa reconstruction.
+
+Un classificateur CNN indépendant, entraîné sur CIFAR-10 et utilisé uniquement pour cette évaluation, prédit les classes des images originales et reconstruites. Les images sont ramenées à 32 × 32 pixels avant classification, conformément à l'entrée du classificateur. La SPA est la proportion d'images pour lesquelles les deux prédictions sont identiques. Elle mesure donc la cohérence des prédictions entre l'original et la reconstruction, et non l'exactitude de ces prédictions par rapport aux étiquettes réelles.
+
+Le classificateur est défini dans [`src/evaluation/semantic_classifier.py`](src/evaluation/semantic_classifier.py) et son entraînement dans [`src/evaluation/train_semantic_classifier.py`](src/evaluation/train_semantic_classifier.py). L'évaluation des deux modèles pour chaque SNR est effectuée par [`src/evaluation/evaluate_semantic_preservation.py`](src/evaluation/evaluate_semantic_preservation.py). Les résultats détaillés sont disponibles dans [`results/semantic_preservation.csv`](results/semantic_preservation.csv).
+
+| SNR (dB) | SPA — MSE | SPA — MSE + Perceptual Loss |
+|---:|---:|---:|
+| -5 | 31,4 % | 29,9 % |
+| 0 | 51,9 % | 46,5 % |
+| 5 | 71,0 % | 66,0 % |
+| 10 | 76,0 % | 74,5 % |
+| 15 | 77,1 % | 75,7 % |
+| 20 | 75,9 % | 75,9 % |
+
+La SPA augmente globalement avec le SNR : pour le modèle MSE, elle passe de 31,4 % à -5 dB à un maximum de 77,1 % à 15 dB, puis atteint 75,9 % à 20 dB. Le modèle MSE obtient une SPA supérieure à celui avec perte perceptuelle pour cinq des six SNR évalués ; les deux résultats sont égaux à 20 dB.
+
+Ainsi, l'amélioration de la qualité perceptuelle mesurée par le PSNR, le SSIM et la Perceptual Loss ne se traduit pas nécessairement par une meilleure cohérence des classes prédites. La SPA complète ces métriques en apportant une mesure orientée vers la préservation du contenu sémantique.
+
 ## 3.7. Conclusion
 
 Dans cette partie, nous avons conçu et évalué un système de communication sémantique d'images reposant sur une architecture CNN encodeur-décodeur et un canal AWGN.
 
 Deux stratégies d'entraînement ont été étudiées : une première basée uniquement sur la MSE et une deuxième combinant la MSE avec une perte perceptuelle extraite d'un réseau VGG16 pré-entraîné.
 
-Les résultats obtenus montrent que la deuxième stratégie fournit de meilleures performances selon les métriques PSNR, SSIM et Perceptual Loss pour les conditions de SNR étudiées.
+Les résultats obtenus montrent que la deuxième stratégie fournit de meilleures performances selon les métriques PSNR, SSIM et Perceptual Loss pour les conditions de SNR étudiées. En revanche, la SPA est légèrement supérieure pour le modèle MSE à la plupart des SNR. Cette différence souligne l'intérêt de compléter les métriques de qualité d'image par une mesure de préservation sémantique.
 
 Cette expérimentation constitue une première validation du système proposé. Des entraînements supplémentaires et des évaluations sur des jeux de données plus diversifiés permettraient de renforcer la généralisation et la robustesse des résultats.
